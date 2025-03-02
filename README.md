@@ -33,37 +33,46 @@
 ### Через Docker
 
 ```bash
+FROM python:3.9-slim
+
+# Установка git
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends git && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Рабочая директория
+WORKDIR /app
+
 # Клонирование репозитория
-git clone https://github.com/your-username/Raspisanparser.git
-cd Raspisanparser
+RUN git clone --depth 1 https://github.com/Zaruber/mbibotishe.git . && \
+    ls -la
 
-# Создание config.py
-cp config_example.py config.py
-# Отредактируйте config.py, указав ваш токен
+# Копирование шаблона конфигурационного файла
+RUN cp config_example.py config.py
 
-# Сборка Docker-образа
-docker build -t rasp-bot .
+# Устанавливаем ваш токен бота напрямую в Dockerfile
+ENV BOT_TOKEN="ТОКЕН_БОТА"
 
-# Запуск контейнера
-docker run -d --name rasp-bot-container rasp-bot
-```
+# Заменяем токен в конфигурационном файле
+RUN sed -i "s/YOUR_BOT_TOKEN_HERE/$BOT_TOKEN/g" config.py
 
-### Вручную
+# ID группы по умолчанию (если требуется другой, измените здесь)
+ENV GROUP_ID="2471"
+RUN sed -i "s/\"2471\"/\"$GROUP_ID\"/g" config.py
 
-```bash
-# Клонирование репозитория
-git clone https://github.com/your-username/Raspisanparser.git
-cd Raspisanparser
+# Устанавливаем зависимости
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Создание config.py
-cp config_example.py config.py
-# Отредактируйте config.py, указав ваш токен
+# Даем разрешение на запись файлов для временных HTML-файлов
+RUN chmod -R 777 /app
 
-# Установка зависимостей
-pip install -r requirements.txt
+# Установка переменных окружения для оптимизации Python
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
-# Запуск бота
-python bot.py
+# Запускаем бота
+CMD ["python", "bot.py"]
 ```
 
 ## Контрибьютинг
