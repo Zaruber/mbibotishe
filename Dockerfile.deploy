@@ -1,0 +1,32 @@
+FROM python:3.9-slim
+
+# Установка git
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends git && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Рабочая директория
+WORKDIR /app
+
+# Клонирование репозитория
+# Замените на свой репозиторий после создания на GitHub
+RUN git clone --depth 1 https://github.com/yourusername/Raspisanparser.git .
+
+# Копирование шаблона конфигурационного файла
+RUN cp config_example.py config.py
+
+# Замена токена бота в конфигурационном файле
+# При использовании deploy.cx рекомендуется передавать токен через переменные окружения
+ARG BOT_TOKEN
+ENV BOT_TOKEN=${BOT_TOKEN:-"YOUR_BOT_TOKEN_HERE"}
+RUN sed -i "s/YOUR_BOT_TOKEN_HERE/$BOT_TOKEN/g" config.py
+
+# Устанавливаем зависимости
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Даем разрешение на запись файлов
+RUN chmod -R 777 /app
+
+# Запускаем бота и держим контейнер активным
+ENTRYPOINT ["python", "bot.py"] 
